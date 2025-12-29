@@ -1,10 +1,10 @@
 import streamlit as st
 from model import create_transaction
 from storage import init_db, insert_transactions, load_transactions
-from voice_parser import parse_voice_text
+from ai_voice_parser import parse_voice_text_ai as parse_voice_text
 
 # =========================================================
-# 🔐 PASSWORD PROTECTION (MUST BE AT VERY TOP)
+# 🔐 PASSWORD PROTECTION
 # =========================================================
 def check_password():
     if "authenticated" not in st.session_state:
@@ -12,11 +12,7 @@ def check_password():
 
     if not st.session_state.authenticated:
         st.title("🔐 Private Expense Tracker")
-
-        password = st.text_input(
-            "Enter password",
-            type="password"
-        )
+        password = st.text_input("Enter password", type="password")
 
         if password == st.secrets["APP_PASSWORD"]:
             st.session_state.authenticated = True
@@ -39,17 +35,14 @@ CATEGORIES = [
     "Shopping",
     "Entertainment",
     "Income",
-    "Other",
-    "Miscallenous",
-    "Electricity bill",
-    "Fuel",
-    "Groceries"
+    "Other"
 ]
 
 ACCOUNTS = [
     "Cash",
     "UPI",
-    "HDFC_CC"
+    "HDFC_CC",
+    "HDFC",
     "Other"
 ]
 
@@ -68,7 +61,6 @@ with st.form("manual_form"):
     amount = st.number_input("Amount", min_value=0.0, step=1.0)
     category = st.selectbox("Category", CATEGORIES)
     account = st.selectbox("Paid Using", ACCOUNTS)
-
     submitted = st.form_submit_button("Preview")
 
 if submitted:
@@ -88,7 +80,7 @@ if submitted:
         st.success("Manual entry saved!")
 
 # =========================================================
-# 🎤 VOICE ENTRY (KEYBOARD MIC)
+# 🎤 VOICE ENTRY (KEYBOARD MIC + AI PARSER)
 # =========================================================
 st.divider()
 st.subheader("🎤 Voice Entry")
@@ -98,12 +90,12 @@ if "voice_text" not in st.session_state:
     st.session_state.voice_text = ""
 
 voice_text = st.text_input(
-    "Example: Spent 450 on Swiggy | Paid 199 for Netflix",
-    value=st.session_state.voice_text
+    "Example: Spent 2000 on TV using credit card",
+    key="voice_text"
 )
 
-if voice_text:
-    parsed_df = parse_voice_text(voice_text)
+if st.session_state.voice_text:
+    parsed_df = parse_voice_text(st.session_state.voice_text)
 
     if parsed_df is not None:
         st.subheader("👀 Review Voice Entry")
@@ -114,14 +106,16 @@ if voice_text:
             "Category",
             CATEGORIES,
             index=CATEGORIES.index(row["category"])
-            if row["category"] in CATEGORIES else CATEGORIES.index("Other")
+            if row["category"] in CATEGORIES else CATEGORIES.index("Other"),
+            key="voice_category"
         )
 
         account = st.selectbox(
             "Paid Using",
             ACCOUNTS,
             index=ACCOUNTS.index(row["account"])
-            if row["account"] in ACCOUNTS else ACCOUNTS.index("UPI")
+            if row["account"] in ACCOUNTS else ACCOUNTS.index("UPI"),
+            key="voice_account"
         )
 
         parsed_df.loc[0, "category"] = category
@@ -142,9 +136,8 @@ if voice_text:
             if st.button("❌ Discard"):
                 st.session_state.voice_text = ""
                 st.warning("Voice entry discarded")
-
     else:
-        st.error("Could not understand. Try: 'Spent 450 on Swiggy'")
+        st.error("Could not understand the sentence. Try again.")
 
 # =========================================================
 # 📄 ALL TRANSACTIONS
