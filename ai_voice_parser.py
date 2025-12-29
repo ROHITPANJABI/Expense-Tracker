@@ -3,6 +3,15 @@ import openai
 import streamlit as st
 from model import create_transaction
 
+response = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=[
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": text}
+    ],
+    temperature=0.1
+)
+
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 SYSTEM_PROMPT = """
@@ -50,3 +59,4 @@ def parse_voice_text_ai(text: str):
 
     except Exception:
         return None
+
