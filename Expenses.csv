@@ -1,0 +1,4 @@
+﻿date,amount,category,account,description,source
+01-12-2024,-450,Food,HDFC,Swiggy dinner,manual
+02-12-2024,-220,Transport,HDFC,Uber ride,manual
+03-12-2024,75000,Income,HDFC,Salary credit,bank_csv
