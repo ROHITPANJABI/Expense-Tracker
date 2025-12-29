@@ -2,7 +2,27 @@ import streamlit as st
 from model import create_transaction
 from storage import init_db, insert_transactions, load_transactions
 from voice_parser import parse_voice_text
+import streamlit as st
 
+def check_password():
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+
+    if not st.session_state.authenticated:
+        st.title("🔐 Private Expense Tracker")
+
+        password = st.text_input(
+            "Enter password",
+            type="password"
+        )
+
+        if password == st.secrets["APP_PASSWORD"]:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.stop()
+
+check_password()
 # ---------------- CONFIG ----------------
 st.set_page_config(
     page_title="Expense Tracker",
