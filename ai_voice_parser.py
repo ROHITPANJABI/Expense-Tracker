@@ -3,6 +3,9 @@ import openai
 import streamlit as st
 from model import create_transaction
 
+# ---------------------------------------------------------
+# SYSTEM PROMPT (MUST EXIST BEFORE USE)
+# ---------------------------------------------------------
 SYSTEM_PROMPT = """
 You are an expense extraction assistant.
 
@@ -19,7 +22,7 @@ def parse_voice_text_ai(text: str):
     if not text:
         return None
 
-    # 🔑 Load secret ONLY when function is called
+    # Read secret ONLY at runtime
     if "OPENAI_API_KEY" not in st.secrets:
         st.error("OPENAI_API_KEY not found in secrets")
         return None
