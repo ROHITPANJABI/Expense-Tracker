@@ -3,17 +3,6 @@ import openai
 import streamlit as st
 from model import create_transaction
 
-response = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": text}
-    ],
-    temperature=0.1
-)
-
-openai.api_key = st.secrets["OPENAI_API_KEY"]
-
 SYSTEM_PROMPT = """
 You are an expense extraction assistant.
 
@@ -23,25 +12,30 @@ From a user sentence, extract:
 - category (Food, Transport, Shopping, Entertainment, Rent, Income, Other)
 - account (Cash, UPI, Credit Card, Bank)
 
-Rules:
-- If unclear, guess best option
-- Return ONLY valid JSON
+Return ONLY valid JSON.
 """
 
 def parse_voice_text_ai(text: str):
     if not text:
         return None
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": text}
-        ],
-        temperature=0.1
-    )
+    # 🔑 Load secret ONLY when function is called
+    if "OPENAI_API_KEY" not in st.secrets:
+        st.error("OPENAI_API_KEY not found in secrets")
+        return None
+
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
 
     try:
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": text}
+            ],
+            temperature=0.1
+        )
+
         data = json.loads(response.choices[0].message.content)
 
         amount = float(data["amount"])
@@ -57,6 +51,6 @@ def parse_voice_text_ai(text: str):
             source="voice"
         )
 
-    except Exception:
+    except Exception as e:
+        st.error(f"AI parsing failed: {e}")
         return None
-
